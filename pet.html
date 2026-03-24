@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>OGQ Pet</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+      overflow: hidden;
+      cursor: default;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-app-region: no-drag;
+    }
+
+    #pet-container {
+      position: fixed;
+      width: 120px;
+      height: 120px;
+      z-index: 9999;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    #pet-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 0;
+      box-shadow: none;
+      background: transparent;
+      transition: transform 0.3s ease, filter 0.3s ease;
+      -webkit-user-drag: none;
+    }
+    #pet-img.shake {
+      animation: shake 0.5s infinite;
+    }
+
+    /* 호버 글로우 */
+    #pet-container:hover #pet-img:not(.shake) {
+      filter: drop-shadow(0 0 8px rgba(78, 205, 196, 0.6));
+    }
+
+    /* 아이들 떠다니기 */
+    #pet-container.idle {
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* 하트 파티클 */
+    .heart-particle {
+      position: fixed;
+      font-size: 18px;
+      pointer-events: none;
+      z-index: 10001;
+      animation: heartFloat 1s ease-out forwards;
+    }
+    @keyframes heartFloat {
+      0% { opacity: 1; transform: translateY(0) scale(0.5); }
+      50% { opacity: 0.8; transform: translateY(-30px) scale(1.2); }
+      100% { opacity: 0; transform: translateY(-60px) scale(0.8); }
+    }
+
+    /* 클릭 포인트 이펙트 */
+    .click-marker {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #4ecdc4;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: clickRipple 0.6s ease-out forwards;
+      z-index: 9998;
+    }
+
+    #timer-wrap {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    #timer {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: conic-gradient(#4ecdc4 0deg 360deg, transparent 360deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      position: relative;
+    }
+    #timer.pulse {
+      animation: pulse 1s infinite;
+    }
+    #timer-text {
+      background: white;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+    .minutes { font-size: 18px; font-weight: 700; color: #4ecdc4; }
+    .rest .minutes { color: #ff6b9d; }
+    #mode-label {
+      font-size: 10px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    /* 포모도로 카운트 */
+    #pomo-count {
+      text-align: center;
+      margin-top: 6px;
+      font-size: 10px;
+      color: #aaa;
+      letter-spacing: 2px;
+    }
+
+    /* 진행률 표시 */
+    #progress-label {
+      position: absolute;
+      bottom: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: #999;
+      white-space: nowrap;
+    }
+
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      color: #4ecdc4;
+      z-index: 10000;
+    }
+
+    /* 타이머 설정 패널 */
+    #timer-settings {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 16px;
+      padding: 24px 28px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      z-index: 20000;
+      pointer-events: auto;
+      display: none;
+      text-align: center;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    #timer-settings.show { display: block; }
+    #timer-settings h3 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .time-inputs {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .time-inputs input {
+      width: 54px;
+      height: 40px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      outline: none;
+      -webkit-app-region: no-drag;
+      -webkit-user-select: text;
+      user-select: text;
+      pointer-events: auto;
+    }
+    .time-inputs input:focus {
+      border-color: #10C58E;
+    }
+    .time-inputs input::-webkit-inner-spin-button,
+    .time-inputs input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .time-inputs span {
+      font-size: 13px;
+      color: #999;
+    }
+    .settings-btns {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .settings-btns button {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-apply {
+      background: #10C58E;
+      color: white;
+    }
+    .btn-cancel {
+      background: #f0f0f0;
+      color: #666;
+    }
+
+    #rest-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 20000;
+      pointer-events: auto;
+      cursor: default;
+    }
+    #rest-overlay.show {
+      display: flex;
+      animation: fadeIn 0.5s ease;
+    }
+    #rest-overlay .rest-text {
+      font-size: 80px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      animation: colorBlink 1.5s ease-in-out infinite;
+      text-shadow: 0 0 30px rgba(255,255,255,0.5);
+    }
+    #rest-overlay .rest-sub {
+      font-size: 22px;
+      color: rgba(255,255,255,0.8);
+      animation: colorBlink 1.5s ease-in-out infinite 0.4s;
+    }
+    #btn-skip-rest {
+      margin-top: 24px;
+      padding: 10px 28px;
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 12px;
+      background: transparent;
+      color: rgba(255,255,255,0.8);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #btn-skip-rest:hover {
+      background: rgba(255,255,255,0.15);
+      border-color: rgba(255,255,255,0.8);
+      color: white;
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .sparkle {
+      display: inline-block;
+      font-size: 40px;
+      animation: sparkleRotate 1s ease-in-out infinite;
+    }
+    .sparkle-l { margin-right: 12px; }
+    .sparkle-r { margin-left: 12px; animation-delay: 0.5s; }
+
+    @keyframes sparkleRotate {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+      50% { transform: scale(1.4) rotate(180deg); opacity: 0.6; }
+    }
+    @keyframes colorBlink {
+      0% { color: #FF6B6B; transform: scale(1); text-shadow: 0 0 30px rgba(255,107,107,0.6); }
+      16% { color: #FFD93D; transform: scale(1.06); text-shadow: 0 0 30px rgba(255,217,61,0.6); }
+      33% { color: #6BCB77; transform: scale(1); text-shadow: 0 0 30px rgba(107,203,119,0.6); }
+      50% { color: #4D96FF; transform: scale(1.06); text-shadow: 0 0 30px rgba(77,150,255,0.6); }
+      66% { color: #FF6BD6; transform: scale(1); text-shadow: 0 0 30px rgba(255,107,214,0.6); }
+      83% { color: #FFA94D; transform: scale(1.06); text-shadow: 0 0 30px rgba(255,169,77,0.6); }
+      100% { color: #FF6B6B; transform: scale(1); text-shadow: 0 0 30px rgba(255,107,107,0.6); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    @keyframes clickRipple {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">로딩 중...</div>
+
+  <div id="timer-settings">
+    <h3>집중 시간</h3>
+    <div class="time-inputs">
+      <input type="number" id="set-hour" min="0" max="23" value="0" placeholder="0">
+      <span>시</span>
+      <input type="number" id="set-min" min="0" max="59" value="25" placeholder="25">
+      <span>분</span>
+      <input type="number" id="set-sec" min="0" max="59" value="0" placeholder="0">
+      <span>초</span>
+    </div>
+    <h3>휴식 시간</h3>
+    <div class="time-inputs">
+      <input type="number" id="set-rest-hour" min="0" max="23" value="0" placeholder="0">
+      <span>시</span>
+      <input type="number" id="set-rest-min" min="0" max="59" value="5" placeholder="5">
+      <span>분</span>
+      <input type="number" id="set-rest-sec" min="0" max="59" value="0" placeholder="0">
+      <span>초</span>
+    </div>
+    <div class="settings-btns">
+      <button class="btn-apply" id="btn-apply-timer">적용</button>
+      <button class="btn-cancel" id="btn-cancel-timer">취소</button>
+    </div>
+  </div>
+
+  <div id="rest-overlay">
+    <div class="rest-text">
+      <span class="sparkle sparkle-l">✦</span>
+      휴식 시간 !!
+      <span class="sparkle sparkle-r">✦</span>
+    </div>
+    <div class="rest-sub">잠시 쉬어가세요</div>
+    <button id="btn-skip-rest">건너뛰기</button>
+  </div>
+
+  <div id="pet-container" style="display: none;">
+    <img id="pet-img" src="" alt="펫">
+  </div>
+
+  <div id="timer-wrap" style="display: none;">
+    <div id="timer">
+      <div id="timer-text">
+        <div class="minutes" id="minutes">25</div>
+        <div id="seconds">00</div>
+        <div id="mode-label">집중</div>
+      </div>
+      <div id="progress-label">0%</div>
+    </div>
+    <div id="pomo-count"></div>
+  </div>
+
+  <script>
+    const petContainer = document.getElementById('pet-container');
+    const petImg = document.getElementById('pet-img');
+    const minutesEl = document.getElementById('minutes');
+    const secondsEl = document.getElementById('seconds');
+    const modeLabelEl = document.getElementById('mode-label');
+    const timerEl = document.getElementById('timer');
+    const timerTextEl = document.getElementById('timer-text');
+    const loadingEl = document.getElementById('loading');
+    const progressLabel = document.getElementById('progress-label');
+    const pomoCountEl = document.getElementById('pomo-count');
+
+    // ===== 펫 물리 =====
+    let targetX = window.innerWidth / 2;
+    let targetY = window.innerHeight / 2;
+    let currentX = targetX;
+    let currentY = targetY;
+    let velocityX = 0;
+    let velocityY = 0;
+    let isMoving = false;
+    let facingLeft = false;
+    let lastMoveTime = Date.now();
+
+    const SPRING_STIFFNESS = 0.06;
+    const SPRING_DAMPING = 0.75;
+    const ARRIVE_THRESHOLD = 1.5;
+    const IDLE_DELAY = 5000;
+
+    // ===== 타이머 =====
+    let FOCUS_DURATION = 25 * 60;
+    let REST_DURATION = 5 * 60;
+
+    let timer = FOCUS_DURATION;
+    let timerRunning = true;
+    let restMode = false;
+    let animationFrame;
+    let originalGif = '';
+    let stillFrame = '';
+    let pomoCount = 0;
+
+    // ===== 알림 사운드 (Web Audio) =====
+    function playChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.5);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + i * 0.15);
+          osc.stop(ctx.currentTime + i * 0.15 + 0.5);
+        });
+      } catch (e) {}
+    }
+
+    // ===== 타이머 표시 포맷 =====
+    function formatTimer(totalSecs) {
+      const h = Math.floor(totalSecs / 3600);
+      const m = Math.floor((totalSecs % 3600) / 60);
+      const s = totalSecs % 60;
+      if (h > 0) {
+        minutesEl.textContent = `${h}:${m.toString().padStart(2, '0')}`;
+        secondsEl.textContent = s.toString().padStart(2, '0');
+      } else {
+        minutesEl.textContent = m;
+        secondsEl.textContent = s.toString().padStart(2, '0');
+      }
+    }
+
+    // ===== 포모도로 카운트 표시 =====
+    function updatePomoDisplay() {
+      if (pomoCount === 0) { pomoCountEl.textContent = ''; return; }
+      if (pomoCount <= 8) {
+        pomoCountEl.textContent = '●'.repeat(pomoCount);
+      } else {
+        pomoCountEl.textContent = '● x' + pomoCount;
+      }
+    }
+
+    // ===== 하트 파티클 =====
+    function spawnHearts(x, y) {
+      const hearts = ['❤️', '💕', '💖', '🩷'];
+      for (let i = 0; i < 4; i++) {
+        const el = document.createElement('div');
+        el.className = 'heart-particle';
+        el.textContent = hearts[i % hearts.length];
+        el.style.left = (x + (Math.random() - 0.5) * 40) + 'px';
+        el.style.top = (y - 10) + 'px';
+        el.style.animationDelay = (i * 0.1) + 's';
+        document.body.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+      }
+    }
+
+    // GIF 첫 프레임 캡처
+    function captureStillFrame(src) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        stillFrame = canvas.toDataURL('image/png');
+      };
+      img.src = src;
+    }
+
+    // GIF 재생/정지 토글
+    function setPetAnimating(animate) {
+      if (animate) {
+        petImg.src = originalGif + '?t=' + Date.now();
+      } else if (stillFrame) {
+        petImg.src = stillFrame;
+      }
+    }
+
+    // 펫 데이터 수신
+    window.api.onPetData((petData) => {
+      originalGif = petData.gif;
+      captureStillFrame(petData.gif);
+      petImg.src = petData.gif;
+      document.title = `${petData.name} 펫 활성화됨`;
+
+      petImg.onload = () => {
+        loadingEl.style.display = 'none';
+        petContainer.style.display = 'block';
+        document.getElementById('timer-wrap').style.display = 'block';
+      };
+      petImg.onerror = () => {
+        loadingEl.textContent = 'GIF 로드 실패';
+        setTimeout(() => window.api.backToSelect(), 2000);
+      };
+    });
+
+    // ===== 휴식 건너뛰기 =====
+    function skipRest() {
+      const restOverlay = document.getElementById('rest-overlay');
+      restOverlay.style.animation = 'fadeOut 0.5s ease';
+      setTimeout(() => {
+        restOverlay.classList.remove('show');
+        restOverlay.style.animation = '';
+        window.api.setIgnoreMouseEvents(true, { forward: true });
+      }, 500);
+      restMode = false;
+      timer = FOCUS_DURATION;
+      setPetAnimating(true);
+      petImg.classList.remove('shake');
+      timerTextEl.classList.remove('rest');
+      timerEl.classList.remove('pulse');
+      modeLabelEl.textContent = '집중';
+      formatTimer(timer);
+    }
+
+    document.getElementById('btn-skip-rest').addEventListener('click', skipRest);
+
+    // 컨텍스트 메뉴 액션 수신
+    window.api.onContextMenuAction((action) => {
+      switch (action) {
+        case 'restart-timer':
+          restMode = false;
+          timer = FOCUS_DURATION;
+          timerRunning = true;
+          setPetAnimating(true);
+          petImg.classList.remove('shake');
+          timerTextEl.classList.remove('rest');
+          timerEl.classList.remove('pulse');
+          modeLabelEl.textContent = '집중';
+          break;
+        case 'toggle-pause':
+          timerRunning = !timerRunning;
+          modeLabelEl.textContent = timerRunning
+            ? (restMode ? '휴식' : '집중')
+            : '일시정지';
+          setPetAnimating(timerRunning);
+          break;
+        case 'rest-5min':
+          restMode = true;
+          timer = REST_DURATION;
+          timerRunning = true;
+          setPetAnimating(true);
+          timerTextEl.classList.add('rest');
+          modeLabelEl.textContent = '휴식';
+          break;
+        case 'show-timer-settings':
+          showTimerSettings();
+          break;
+      }
+    });
+
+    // 타이머 설정 패널
+    const settingsPanel = document.getElementById('timer-settings');
+    settingsPanel.addEventListener('mouseenter', () => {
+      window.api.setIgnoreMouseEvents(false);
+    });
+    const setHour = document.getElementById('set-hour');
+    const setMin = document.getElementById('set-min');
+    const setSec = document.getElementById('set-sec');
+    const setRestHour = document.getElementById('set-rest-hour');
+    const setRestMin = document.getElementById('set-rest-min');
+    const setRestSec = document.getElementById('set-rest-sec');
+
+    function showTimerSettings() {
+      setHour.value = Math.floor(FOCUS_DURATION / 3600);
+      setMin.value = Math.floor((FOCUS_DURATION % 3600) / 60);
+      setSec.value = FOCUS_DURATION % 60;
+      setRestHour.value = Math.floor(REST_DURATION / 3600);
+      setRestMin.value = Math.floor((REST_DURATION % 3600) / 60);
+      setRestSec.value = REST_DURATION % 60;
+      settingsPanel.classList.add('show');
+      window.api.setIgnoreMouseEvents(false);
+    }
+
+    function hideTimerSettings() {
+      settingsPanel.classList.remove('show');
+      window.api.setIgnoreMouseEvents(true, { forward: true });
+    }
+
+    document.getElementById('btn-apply-timer').addEventListener('click', () => {
+      const h = parseInt(setHour.value) || 0;
+      const m = parseInt(setMin.value) || 0;
+      const s = parseInt(setSec.value) || 0;
+      const rh = parseInt(setRestHour.value) || 0;
+      const rm = parseInt(setRestMin.value) || 0;
+      const rs = parseInt(setRestSec.value) || 0;
+      const total = h * 3600 + m * 60 + s;
+      const restTotal = rh * 3600 + rm * 60 + rs;
+      if (total <= 0) return;
+      FOCUS_DURATION = total;
+      REST_DURATION = restTotal > 0 ? restTotal : 5 * 60;
+      timer = FOCUS_DURATION;
+      restMode = false;
+      timerRunning = true;
+      setPetAnimating(true);
+      petImg.classList.remove('shake');
+      timerTextEl.classList.remove('rest');
+      timerEl.classList.remove('pulse');
+      modeLabelEl.textContent = '집중';
+      formatTimer(timer);
+      hideTimerSettings();
+    });
+
+    document.getElementById('btn-cancel-timer').addEventListener('click', () => {
+      hideTimerSettings();
+    });
+
+    // ===== 클릭으로 포인트 이동 =====
+    document.addEventListener('click', (e) => {
+      if (petContainer.contains(e.target) || document.getElementById('timer-wrap').contains(e.target)) return;
+
+      targetX = e.clientX;
+      targetY = e.clientY;
+      isMoving = true;
+      lastMoveTime = Date.now();
+      petContainer.classList.remove('idle');
+
+      // 이동 방향에 따라 좌우 반전
+      if (targetX < currentX) facingLeft = true;
+      else if (targetX > currentX) facingLeft = false;
+
+      // 클릭 이펙트
+      const marker = document.createElement('div');
+      marker.className = 'click-marker';
+      marker.style.left = e.clientX + 'px';
+      marker.style.top = e.clientY + 'px';
+      document.body.appendChild(marker);
+      marker.addEventListener('animationend', () => marker.remove());
+    });
+
+    // ===== 스프링 물리 애니메이션 =====
+    function animate() {
+      if (isMoving) {
+        const dx = targetX - currentX;
+        const dy = targetY - currentY;
+
+        // 스프링 물리: 가속 → 감속 (오버슈트 가능)
+        velocityX += dx * SPRING_STIFFNESS;
+        velocityY += dy * SPRING_STIFFNESS;
+        velocityX *= SPRING_DAMPING;
+        velocityY *= SPRING_DAMPING;
+
+        currentX += velocityX;
+        currentY += velocityY;
+
+        // 도착 판정
+        if (Math.abs(dx) < ARRIVE_THRESHOLD && Math.abs(dy) < ARRIVE_THRESHOLD
+            && Math.abs(velocityX) < 0.5 && Math.abs(velocityY) < 0.5) {
+          currentX = targetX;
+          currentY = targetY;
+          velocityX = 0;
+          velocityY = 0;
+          isMoving = false;
+          lastMoveTime = Date.now();
+        }
+      }
+
+      // 좌우 반전 적용
+      const scaleX = facingLeft ? -1 : 1;
+      if (!isDragging) {
+        petImg.style.transform = `scaleX(${scaleX})`;
+      }
+
+      petContainer.style.left = (currentX - 60) + 'px';
+      petContainer.style.top = (currentY - 60) + 'px';
+
+      // 아이들 체크
+      if (!isMoving && !isDragging && Date.now() - lastMoveTime > IDLE_DELAY) {
+        petContainer.classList.add('idle');
+      }
+
+      animationFrame = requestAnimationFrame(animate);
+    }
+    animate();
+
+    // ===== 타이머 =====
+    setInterval(() => {
+      if (!timerRunning) return;
+
+      timer--;
+      formatTimer(timer);
+
+      const total = restMode ? REST_DURATION : FOCUS_DURATION;
+      const elapsed = total - timer;
+      const progress = (elapsed / total) * 360;
+      const percent = Math.round((elapsed / total) * 100);
+      const color1 = restMode ? '#ff6b9d' : '#4ecdc4';
+      const color2 = restMode ? '#ffecd2' : '#ff6b9d';
+      timerEl.style.background = `conic-gradient(${color1} 0deg ${progress}deg, ${color2} ${progress}deg 360deg)`;
+      progressLabel.textContent = percent + '%';
+
+      if (timer <= 60 && timer > 0) {
+        timerEl.classList.add('pulse');
+      } else {
+        timerEl.classList.remove('pulse');
+      }
+
+      if (timer <= 0) {
+        const restOverlay = document.getElementById('rest-overlay');
+        playChime();
+
+        if (!restMode) {
+          // 집중 끝 → 휴식 시작
+          pomoCount++;
+          updatePomoDisplay();
+          restMode = true;
+          timer = REST_DURATION;
+          petImg.classList.add('shake');
+          timerTextEl.classList.add('rest');
+          modeLabelEl.textContent = '휴식';
+          window.api.setIgnoreMouseEvents(false);
+          restOverlay.classList.add('show');
+        } else {
+          // 휴식 끝 → 집중 재시작
+          restOverlay.style.animation = 'fadeOut 0.5s ease';
+          setTimeout(() => {
+            restOverlay.classList.remove('show');
+            restOverlay.style.animation = '';
+            window.api.setIgnoreMouseEvents(true, { forward: true });
+          }, 500);
+          restMode = false;
+          timer = FOCUS_DURATION;
+          setPetAnimating(true);
+          petImg.classList.remove('shake');
+          timerTextEl.classList.remove('rest');
+          timerEl.classList.remove('pulse');
+          modeLabelEl.textContent = '집중';
+          restOverlay.classList.remove('show');
+        }
+        formatTimer(timer);
+      }
+    }, 1000);
+
+    // ESC → 앱 종료
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        cancelAnimationFrame(animationFrame);
+        window.api.quitApp();
+      }
+    });
+
+    // ===== 드래그 =====
+    let isDragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    petContainer.addEventListener('mouseenter', () => {
+      window.api.setIgnoreMouseEvents(false);
+    });
+    petContainer.addEventListener('mouseleave', () => {
+      if (!isDragging) {
+        window.api.setIgnoreMouseEvents(true, { forward: true });
+      }
+    });
+    document.getElementById('timer-wrap').addEventListener('mouseenter', () => {
+      window.api.setIgnoreMouseEvents(false);
+    });
+    document.getElementById('timer-wrap').addEventListener('mouseleave', () => {
+      window.api.setIgnoreMouseEvents(true, { forward: true });
+    });
+
+    petContainer.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isDragging = true;
+      isMoving = false;
+      petContainer.classList.remove('idle');
+      lastMoveTime = Date.now();
+      dragOffsetX = e.clientX - currentX;
+      dragOffsetY = e.clientY - currentY;
+      petImg.style.cursor = 'grabbing';
+      petImg.style.transform = 'scale(1.1)';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      currentX = e.clientX - dragOffsetX;
+      currentY = e.clientY - dragOffsetY;
+      targetX = currentX;
+      targetY = currentY;
+      petContainer.style.left = (currentX - 60) + 'px';
+      petContainer.style.top = (currentY - 60) + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      lastMoveTime = Date.now();
+      petImg.style.cursor = 'pointer';
+      const scaleX = facingLeft ? -1 : 1;
+      petImg.style.transform = `scaleX(${scaleX})`;
+    });
+
+    // 펫 클릭 → 하트 파티클
+    petContainer.addEventListener('click', (e) => {
+      if (!isDragging) {
+        spawnHearts(currentX, currentY - 30);
+      }
+    });
+
+    // 더블클릭 반응
+    petContainer.addEventListener('dblclick', () => {
+      petImg.style.transform = 'scale(1.5) rotate(15deg)';
+      setTimeout(() => {
+        const scaleX = facingLeft ? -1 : 1;
+        petImg.style.transform = `scaleX(${scaleX})`;
+      }, 500);
+    });
+
+    // 우클릭 → 컨텍스트 메뉴
+    petContainer.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      window.api.showContextMenu();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "name": "ogq-desktop-pet",
+  "version": "0.2.0",
+  "description": "OGQ Desktop Pet - 데스크톱 위의 귀여운 펫 친구",
+  "main": "main.js",
+  "author": "OGQ",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.ogq.desktop-pet",
+    "productName": "OGQ Desktop Pet",
+    "mac": {
+      "icon": "assets/icon.png",
+      "target": ["dmg", "zip"]
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "pet.html",
+      "select.html",
+      "assets/**/*"
+    ]
+  }
+}
