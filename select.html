@@ -6,10 +6,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
+    html, body { height: 100%; overflow: hidden; }
     body {
       font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, sans-serif;
       text-align: center;
@@ -17,194 +14,162 @@
       background-color: #f7f7f7;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='20' viewBox='0 0 100 20'%3E%3Cpath d='M0 10 Q25 0 50 10 Q75 20 100 10' fill='none' stroke='%23ececec' stroke-width='1.5'/%3E%3C/svg%3E");
       background-size: 100px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
     }
+    h1 { font-family: 'Fredoka', sans-serif; font-size: 30px; color: #10C58E; font-weight: 600; letter-spacing: 1px; }
+    .subtitle { font-size: 12px; color: #aaa; font-weight: 400; margin-top: 4px; margin-bottom: 12px; }
 
-    h1 {
-      font-family: 'Fredoka', sans-serif;
-      font-size: 30px;
-      color: #10C58E;
-      font-weight: 600;
-      letter-spacing: 1px;
+    /* 툴바 */
+    .toolbar {
+      display: flex; gap: 8px; align-items: center; width: 100%; max-width: 340px; margin-bottom: 10px;
     }
-    .subtitle {
-      font-size: 12px;
-      color: #aaa;
-      font-weight: 400;
-      margin-top: 4px;
-      margin-bottom: 16px;
-    }
-
-    /* 검색 */
     #search-input {
-      width: 100%;
-      max-width: 340px;
-      padding: 8px 14px;
-      border: 2px solid #e8e8e8;
-      border-radius: 12px;
-      font-size: 13px;
-      font-family: inherit;
-      outline: none;
-      margin-bottom: 14px;
-      transition: border-color 0.2s;
+      flex: 1; padding: 8px 14px; border: 2px solid #e8e8e8; border-radius: 12px;
+      font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.2s;
     }
-    #search-input:focus {
-      border-color: #10C58E;
+    #search-input:focus { border-color: #10C58E; }
+    #search-input::placeholder { color: #ccc; }
+    .view-toggle {
+      width: 34px; height: 34px; border: 2px solid #e8e8e8; border-radius: 10px;
+      background: white; cursor: pointer; font-size: 16px; display: flex; align-items: center;
+      justify-content: center; transition: all 0.2s;
     }
-    #search-input::placeholder {
-      color: #ccc;
-    }
+    .view-toggle:hover { border-color: #10C58E; }
 
-    /* 스크롤 가능한 그리드 영역 */
+    /* 스크롤 그리드 */
     .characters-wrap {
-      flex: 1;
-      width: 100%;
-      max-width: 340px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding-bottom: 8px;
+      flex: 1; width: 100%; max-width: 340px;
+      overflow-y: auto; overflow-x: hidden; padding-bottom: 8px;
     }
-    .characters-wrap::-webkit-scrollbar {
-      width: 4px;
+    .characters-wrap::-webkit-scrollbar { width: 4px; }
+    .characters-wrap::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+    .characters { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; }
+    .characters.list-view { grid-template-columns: 1fr; }
+    .characters.list-view .character-card {
+      flex-direction: row; padding: 8px 14px; gap: 12px;
     }
-    .characters-wrap::-webkit-scrollbar-thumb {
-      background: #ddd;
-      border-radius: 4px;
-    }
-
-    .characters {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      width: 100%;
-    }
+    .characters.list-view .gif-preview { width: 48px; height: 48px; }
+    .characters.list-view .character-name { margin-top: 0; font-size: 14px; }
 
     .character-card {
-      background: white;
-      border-radius: 16px;
-      border: 2px solid #f0f0f0;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      transition: all 0.25s ease;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px 6px 8px;
+      background: white; border-radius: 16px; border: 2px solid #f0f0f0;
+      cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.25s ease; overflow: visible;
+      display: flex; flex-direction: column; align-items: center; padding: 10px 6px 8px;
+      position: relative;
+      /* 입장 애니메이션 초기 상태 */
+      opacity: 0; transform: translateY(16px);
     }
-    .character-card.hidden {
-      display: none;
-    }
+    .character-card.animate-in { opacity: 1; transform: translateY(0); transition: opacity 0.4s ease, transform 0.4s ease; }
+    .character-card.hidden { display: none; }
     .character-card:hover {
       transform: translateY(-4px) rotate(-1deg) scale(1.03);
-      box-shadow: 0 8px 20px rgba(16, 197, 142, 0.15);
-      border-color: #10C58E;
+      box-shadow: 0 8px 20px rgba(16, 197, 142, 0.15); border-color: #10C58E;
     }
-    .character-card:active {
-      transform: translateY(-1px) scale(0.97);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
+    .character-card.animate-in:hover { transform: translateY(-4px) rotate(-1deg) scale(1.03); }
+    .character-card:active { transform: translateY(-1px) scale(0.97); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
     .character-card.selected {
-      border-color: #10C58E;
-      transform: scale(1.08);
-      box-shadow: 0 0 20px rgba(16, 197, 142, 0.4);
-      animation: selectFlash 0.4s ease;
+      border-color: #10C58E; transform: scale(1.08);
+      box-shadow: 0 0 20px rgba(16, 197, 142, 0.4); animation: selectFlash 0.4s ease;
     }
+    .character-card.focused { outline: 2px solid #10C58E; outline-offset: 2px; }
     @keyframes selectFlash {
-      0% { transform: scale(1); border-color: #f0f0f0; }
-      50% { transform: scale(1.12); border-color: #10C58E; box-shadow: 0 0 30px rgba(16, 197, 142, 0.6); }
-      100% { transform: scale(1.08); border-color: #10C58E; }
+      0% { transform: scale(1); } 50% { transform: scale(1.12); box-shadow: 0 0 30px rgba(16, 197, 142, 0.6); } 100% { transform: scale(1.08); }
     }
 
-    .gif-preview {
-      width: 72px;
-      height: 72px;
-      border-radius: 14px;
-      object-fit: contain;
-      background: transparent;
-      display: block;
+    /* 즐겨찾기 버튼 */
+    .fav-btn {
+      position: absolute; top: 4px; right: 4px; width: 24px; height: 24px;
+      border: none; background: none; cursor: pointer; font-size: 14px;
+      opacity: 0.3; transition: opacity 0.2s, transform 0.2s; z-index: 2;
     }
-    .character-card .gif-preview {
-      animation-play-state: paused;
-    }
-    .character-card:hover .gif-preview {
-      animation: bounce 0.6s ease infinite alternate;
-    }
+    .fav-btn:hover { opacity: 0.7; transform: scale(1.2); }
+    .fav-btn.favorited { opacity: 1; }
 
-    /* 스켈레톤 로딩 */
+    /* 최근 뱃지 */
+    .recent-badge {
+      position: absolute; top: 4px; left: 4px;
+      background: #10C58E; color: white; font-size: 9px; font-weight: 600;
+      padding: 2px 6px; border-radius: 6px; display: none;
+    }
+    .character-card.last-used .recent-badge { display: block; }
+
+    /* 툴팁 */
+    .card-tooltip {
+      position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.8); color: white; padding: 3px 10px; border-radius: 6px;
+      font-size: 10px; white-space: nowrap; opacity: 0; pointer-events: none;
+      transition: opacity 0.2s; z-index: 10;
+    }
+    .card-tooltip.show { opacity: 1; }
+
+    .gif-preview { width: 72px; height: 72px; border-radius: 14px; object-fit: contain; background: transparent; display: block; }
+    .character-card .gif-preview { animation-play-state: paused; }
+    .character-card:hover .gif-preview { animation: bounce 0.6s ease infinite alternate; }
     .gif-preview.loading {
       background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
+      background-size: 200% 100%; animation: shimmer 1.5s infinite;
     }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    .character-name {
-      margin-top: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      color: #555;
-    }
-    .character-card:hover .character-name {
-      color: #10C58E;
-      font-weight: 600;
-    }
-
-    /* 푸터 */
-    .footer {
-      padding: 10px 0 8px;
-      font-size: 10px;
-      color: #bbb;
-      letter-spacing: 0.3px;
-    }
-    .footer span {
-      color: #ddd;
-      margin: 0 4px;
-    }
-
-    @keyframes bounce {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(-6px); }
-    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .character-name { margin-top: 6px; font-size: 12px; font-weight: 500; color: #555; }
+    .character-card:hover .character-name { color: #10C58E; font-weight: 600; }
+    .footer { padding: 10px 0 8px; font-size: 10px; color: #bbb; letter-spacing: 0.3px; }
+    .footer span { color: #ddd; margin: 0 4px; }
+    @keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-6px); } }
   </style>
 </head>
 <body>
   <h1>OGQ Desk Pet</h1>
   <p class="subtitle">내펫을 선택해주세용</p>
 
-  <input type="text" id="search-input" placeholder="캐릭터 검색...">
+  <div class="toolbar">
+    <input type="text" id="search-input" placeholder="캐릭터 검색...">
+    <button class="view-toggle" id="view-toggle" title="보기 전환">▦</button>
+  </div>
 
   <div class="characters-wrap">
-    <div class="characters">
+    <div class="characters" id="characters-grid">
       <div class="character-card" data-id="1" data-name="교모티콘" data-gif="assets/gubuki.gif">
+        <button class="fav-btn">♥</button>
+        <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/gubuki.gif" src="" alt="교모티콘">
         <div class="character-name">교모티콘</div>
+        <div class="card-tooltip">교모티콘</div>
       </div>
       <div class="character-card" data-id="2" data-name="하찮햄" data-gif="assets/ppokku.gif">
+        <button class="fav-btn">♥</button>
+        <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/ppokku.gif" src="" alt="하찮햄">
         <div class="character-name">하찮햄</div>
+        <div class="card-tooltip">하찮햄</div>
       </div>
       <div class="character-card" data-id="3" data-name="베리콘" data-gif="assets/nareun.gif">
+        <button class="fav-btn">♥</button>
+        <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/nareun.gif" src="" alt="베리콘">
         <div class="character-name">베리콘</div>
+        <div class="card-tooltip">베리콘</div>
       </div>
       <div class="character-card" data-id="4" data-name="구북티콘" data-gif="assets/coinko.gif">
+        <button class="fav-btn">♥</button>
+        <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/coinko.gif" src="" alt="구북티콘">
         <div class="character-name">구북티콘</div>
+        <div class="card-tooltip">구북티콘</div>
       </div>
       <div class="character-card" data-id="5" data-name="혜냥이랑" data-gif="assets/custom-default.gif">
+        <button class="fav-btn">♥</button>
+        <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/custom-default.gif" src="" alt="혜냥이랑">
         <div class="character-name">혜냥이랑</div>
+        <div class="card-tooltip">혜냥이랑</div>
       </div>
       <div class="character-card" data-id="6" data-name="해달티콘" data-gif="assets/char6.gif">
+        <button class="fav-btn">♥</button>
+        <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/char6.gif" src="" alt="해달티콘">
         <div class="character-name">해달티콘</div>
+        <div class="card-tooltip">해달티콘</div>
       </div>
     </div>
   </div>
@@ -212,58 +177,140 @@
   <div class="footer">Powered by OGQ <span>|</span> v0.2.0</div>
 
   <script>
-    const cards = document.querySelectorAll('.character-card');
+    const grid = document.getElementById('characters-grid');
+    const cards = Array.from(document.querySelectorAll('.character-card'));
     const searchInput = document.getElementById('search-input');
+    let focusedIdx = -1;
+    let isListView = false;
 
-    // 검색 필터
-    searchInput.addEventListener('input', () => {
-      const query = searchInput.value.trim().toLowerCase();
+    // ===== 즐겨찾기 =====
+    function getFavorites() { return JSON.parse(localStorage.getItem('ogq-favorites') || '[]'); }
+    function setFavorites(favs) { localStorage.setItem('ogq-favorites', JSON.stringify(favs)); }
+
+    function updateFavUI() {
+      const favs = getFavorites();
       cards.forEach(card => {
-        const name = card.dataset.name.toLowerCase();
-        card.classList.toggle('hidden', query && !name.includes(query));
+        const btn = card.querySelector('.fav-btn');
+        const isFav = favs.includes(card.dataset.id);
+        btn.classList.toggle('favorited', isFav);
       });
+    }
+
+    function sortByFavorites() {
+      const favs = getFavorites();
+      const sorted = [...cards].sort((a, b) => {
+        const aFav = favs.includes(a.dataset.id) ? 0 : 1;
+        const bFav = favs.includes(b.dataset.id) ? 0 : 1;
+        return aFav - bFav;
+      });
+      sorted.forEach(card => grid.appendChild(card));
+    }
+
+    // ===== 최근 사용 =====
+    function updateLastUsed() {
+      const lastId = localStorage.getItem('ogq-last-used');
+      cards.forEach(card => card.classList.toggle('last-used', card.dataset.id === lastId));
+    }
+
+    // ===== 보기 전환 =====
+    document.getElementById('view-toggle').addEventListener('click', () => {
+      isListView = !isListView;
+      grid.classList.toggle('list-view', isListView);
+      document.getElementById('view-toggle').textContent = isListView ? '▤' : '▦';
     });
 
+    // ===== 검색 =====
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim().toLowerCase();
+      cards.forEach(card => card.classList.toggle('hidden', q && !card.dataset.name.toLowerCase().includes(q)));
+    });
+
+    // ===== 키보드 내비게이션 =====
+    function getVisibleCards() { return cards.filter(c => !c.classList.contains('hidden')); }
+
+    function setFocused(idx) {
+      const visible = getVisibleCards();
+      if (focusedIdx >= 0 && focusedIdx < visible.length) visible[focusedIdx].classList.remove('focused');
+      focusedIdx = Math.max(0, Math.min(idx, visible.length - 1));
+      if (visible[focusedIdx]) {
+        visible[focusedIdx].classList.add('focused');
+        visible[focusedIdx].scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (document.activeElement === searchInput) return;
+      const visible = getVisibleCards();
+      const cols = isListView ? 1 : 2;
+      switch (e.key) {
+        case 'ArrowRight': e.preventDefault(); setFocused(focusedIdx + 1); break;
+        case 'ArrowLeft': e.preventDefault(); setFocused(focusedIdx - 1); break;
+        case 'ArrowDown': e.preventDefault(); setFocused(focusedIdx + cols); break;
+        case 'ArrowUp': e.preventDefault(); setFocused(focusedIdx - cols); break;
+        case 'Enter':
+          e.preventDefault();
+          if (focusedIdx >= 0 && focusedIdx < visible.length) visible[focusedIdx].click();
+          break;
+      }
+    });
+
+    // ===== 카드 초기화 =====
     cards.forEach(card => {
       const img = card.querySelector('.gif-preview');
       const gifSrc = img.dataset.src;
+      let tooltipTimer = null;
+      const tooltip = card.querySelector('.card-tooltip');
 
-      // 스켈레톤 → 정지 프레임 로드
+      // 스켈레톤 → 정지 프레임
       const still = new Image();
       still.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = still.naturalWidth;
-        canvas.height = still.naturalHeight;
-        canvas.getContext('2d').drawImage(still, 0, 0);
-        img.dataset.still = canvas.toDataURL('image/png');
-        img.src = img.dataset.still;
-        img.classList.remove('loading');
+        const c = document.createElement('canvas');
+        c.width = still.naturalWidth; c.height = still.naturalHeight;
+        c.getContext('2d').drawImage(still, 0, 0);
+        img.dataset.still = c.toDataURL('image/png');
+        img.src = img.dataset.still; img.classList.remove('loading');
       };
-      still.onerror = () => {
-        img.classList.remove('loading');
-      };
+      still.onerror = () => img.classList.remove('loading');
       still.src = gifSrc;
 
       card.addEventListener('mouseenter', () => {
         img.src = gifSrc + '?t=' + Date.now();
+        tooltipTimer = setTimeout(() => tooltip.classList.add('show'), 1500);
       });
-
       card.addEventListener('mouseleave', () => {
-        if (img.dataset.still) {
-          img.src = img.dataset.still;
-        }
+        if (img.dataset.still) img.src = img.dataset.still;
+        clearTimeout(tooltipTimer); tooltip.classList.remove('show');
       });
 
+      // 즐겨찾기 토글
+      card.querySelector('.fav-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const favs = getFavorites();
+        const id = card.dataset.id;
+        const idx = favs.indexOf(id);
+        if (idx >= 0) favs.splice(idx, 1); else favs.push(id);
+        setFavorites(favs); updateFavUI(); sortByFavorites();
+      });
+
+      // 선택
       card.addEventListener('click', () => {
-        // 선택 애니메이션
+        localStorage.setItem('ogq-last-used', card.dataset.id);
         card.classList.add('selected');
         setTimeout(() => {
-          window.api.selectPet({
-            id: Number(card.dataset.id),
-            name: card.dataset.name,
-            gif: card.dataset.gif
-          });
+          window.api.selectPet({ id: Number(card.dataset.id), name: card.dataset.name, gif: card.dataset.gif });
         }, 350);
+      });
+    });
+
+    // 초기화
+    updateFavUI();
+    sortByFavorites();
+    updateLastUsed();
+
+    // 입장 애니메이션 (staggered)
+    requestAnimationFrame(() => {
+      cards.forEach((card, i) => {
+        setTimeout(() => card.classList.add('animate-in'), i * 70);
       });
     });
   </script>

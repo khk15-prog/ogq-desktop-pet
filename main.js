@@ -1,5 +1,5 @@
 delete process.env.ELECTRON_RUN_AS_NODE;
-const { app, BrowserWindow, ipcMain, Menu, Tray, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, Tray, globalShortcut, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -11,6 +11,8 @@ if (!gotLock) {
 
 let selectWin, petWin, tray;
 let autoLaunch = app.getLoginItemSettings().openAtLogin;
+let alwaysOnTop = true;
+let petOpacity = 100;
 
 const preloadPath = path.join(__dirname, 'preload.js');
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
@@ -25,6 +27,20 @@ function loadSettings() {
 function saveSettings(data) {
   const current = loadSettings();
   fs.writeFileSync(settingsPath, JSON.stringify({ ...current, ...data }), 'utf-8');
+}
+
+// 멀티모니터: 모든 디스플레이를 포괄하는 영역 계산
+function getAllDisplayBounds() {
+  const displays = screen.getAllDisplays();
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const d of displays) {
+    const { x, y, width, height } = d.bounds;
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + width);
+    maxY = Math.max(maxY, y + height);
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }
 
 function createSelectWindow() {
@@ -48,17 +64,16 @@ function createSelectWindow() {
 function createPetWindow(petData) {
   if (petWin) petWin.close();
 
-  const { screen } = require('electron');
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const bounds = getAllDisplayBounds();
 
   petWin = new BrowserWindow({
-    width,
-    height,
-    x: 0,
-    y: 0,
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x,
+    y: bounds.y,
     transparent: true,
     frame: false,
-    alwaysOnTop: true,
+    alwaysOnTop,
     skipTaskbar: true,
     hasShadow: false,
     webPreferences: {
@@ -69,10 +84,16 @@ function createPetWindow(petData) {
   });
 
   petWin.setIgnoreMouseEvents(true, { forward: true });
+  petWin.setOpacity(petOpacity / 100);
   petWin.loadFile('pet.html');
 
   petWin.webContents.on('did-finish-load', () => {
     petWin.webContents.send('pet-data', petData);
+    // 저장된 타이머 상태 복원
+    const settings = loadSettings();
+    if (settings.timerState) {
+      petWin.webContents.send('restore-timer-state', settings.timerState);
+    }
   });
 
   if (selectWin) selectWin.hide();
@@ -103,6 +124,16 @@ function rebuildTrayMenu() {
       click: () => {
         if (petWin) { petWin.close(); petWin = null; }
         if (selectWin) { selectWin.show(); selectWin.center(); }
+        else { createSelectWindow(); }
+      }
+    },
+    {
+      label: '저장된 펫 초기화',
+      click: () => {
+        saveSettings({ lastPet: null, timerState: null });
+        if (petWin) { petWin.close(); petWin = null; }
+        if (selectWin) { selectWin.show(); selectWin.center(); }
+        else { createSelectWindow(); }
       }
     },
     { type: 'separator' },
@@ -113,6 +144,32 @@ function rebuildTrayMenu() {
     {
       label: '일시정지 / 재개',
       click: () => petWin?.webContents.send('context-menu-action', 'toggle-pause')
+    },
+    { type: 'separator' },
+    {
+      label: '항상 위',
+      type: 'checkbox',
+      checked: alwaysOnTop,
+      click: (item) => {
+        alwaysOnTop = item.checked;
+        if (petWin && !petWin.isDestroyed()) {
+          petWin.setAlwaysOnTop(alwaysOnTop);
+        }
+      }
+    },
+    {
+      label: '투명도',
+      submenu: [100, 75, 50, 25].map(v => ({
+        label: `${v}%`,
+        type: 'radio',
+        checked: petOpacity === v,
+        click: () => {
+          petOpacity = v;
+          if (petWin && !petWin.isDestroyed()) {
+            petWin.setOpacity(v / 100);
+          }
+        }
+      }))
     },
     { type: 'separator' },
     {
@@ -136,7 +193,7 @@ function rebuildTrayMenu() {
 app.whenReady().then(() => {
   // 트레이 아이콘
   tray = new Tray(path.join(__dirname, 'assets', 'icon.png'));
-  tray.setToolTip('OGQ Desktop Pet');
+  tray.setToolTip('OGQ Desktop Pet v0.2.0');
   rebuildTrayMenu();
 
   // 글로벌 단축키: Cmd+Shift+P (Mac) / Ctrl+Shift+P
@@ -178,6 +235,11 @@ app.whenReady().then(() => {
     saveSettings({ lastPet: null });
   });
 
+  // 타이머 상태 저장
+  ipcMain.on('save-timer-state', (_event, state) => {
+    saveSettings({ timerState: state });
+  });
+
   ipcMain.on('show-context-menu', (event) => {
     const template = [
       {
@@ -211,6 +273,13 @@ app.whenReady().then(() => {
     const menu = Menu.buildFromTemplate(template);
     menu.popup({ window: BrowserWindow.fromWebContents(event.sender) });
   });
+});
+
+// 종료 시 타이머 상태 저장 요청
+app.on('before-quit', () => {
+  if (petWin && !petWin.isDestroyed()) {
+    petWin.webContents.send('request-timer-state');
+  }
 });
 
 app.on('will-quit', () => {

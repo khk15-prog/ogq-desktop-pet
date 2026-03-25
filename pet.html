@@ -32,22 +32,81 @@
       transition: transform 0.3s ease, filter 0.3s ease;
       -webkit-user-drag: none;
     }
-    #pet-img.shake {
-      animation: shake 0.5s infinite;
-    }
+    #pet-img.shake { animation: shake 0.5s infinite; }
 
     /* 호버 글로우 */
     #pet-container:hover #pet-img:not(.shake) {
       filter: drop-shadow(0 0 8px rgba(78, 205, 196, 0.6));
     }
 
-    /* 아이들 떠다니기 */
-    #pet-container.idle {
-      animation: float 3s ease-in-out infinite;
-    }
+    /* 아이들 애니메이션들 */
+    #pet-container.idle-float { animation: float 3s ease-in-out infinite; }
+    #pet-container.idle-spin { animation: idleSpin 4s linear infinite; }
+    #pet-container.idle-jump { animation: idleJump 1s ease-in-out infinite; }
     @keyframes float {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-8px); }
+    }
+    @keyframes idleSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes idleJump {
+      0%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-16px); }
+    }
+
+    /* 무드 인디케이터 */
+    #mood-indicator {
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 10002;
+    }
+
+    /* 잔상 */
+    .trail-ghost {
+      position: fixed;
+      width: 120px;
+      height: 120px;
+      pointer-events: none;
+      z-index: 9998;
+      animation: trailFade 0.4s ease-out forwards;
+    }
+    .trail-ghost img {
+      width: 100%;
+      height: 100%;
+      opacity: 0.3;
+    }
+    @keyframes trailFade {
+      0% { opacity: 0.3; }
+      100% { opacity: 0; }
+    }
+
+    /* 착지 바운스 */
+    #pet-container.bounce { animation: bounceSquash 0.3s ease; }
+    @keyframes bounceSquash {
+      0% { transform: scaleX(1) scaleY(1); }
+      40% { transform: scaleX(1.2) scaleY(0.8); }
+      70% { transform: scaleX(0.9) scaleY(1.1); }
+      100% { transform: scaleX(1) scaleY(1); }
+    }
+
+    /* 드래그 스파클 */
+    .drag-sparkle {
+      position: fixed;
+      font-size: 14px;
+      pointer-events: none;
+      z-index: 10001;
+      animation: sparklePop 0.5s ease-out forwards;
+    }
+    @keyframes sparklePop {
+      0% { opacity: 1; transform: scale(0.5) rotate(0deg); }
+      100% { opacity: 0; transform: scale(1.5) rotate(180deg) translateY(-20px); }
     }
 
     /* 하트 파티클 */
@@ -76,13 +135,18 @@
       z-index: 9998;
     }
 
+    /* ===== 타이머 ===== */
     #timer-wrap {
       position: fixed;
       top: 30px;
       right: 30px;
       pointer-events: auto;
       cursor: pointer;
+      transition: transform 0.3s ease;
+      z-index: 10000;
     }
+    #timer-wrap.mini { transform: scale(0.5); transform-origin: top right; }
+    #timer-wrap.dragging { cursor: grabbing; }
     #timer {
       width: 80px;
       height: 80px;
@@ -93,10 +157,9 @@
       justify-content: center;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
       position: relative;
+      transition: background 1.5s ease;
     }
-    #timer.pulse {
-      animation: pulse 1s infinite;
-    }
+    #timer.pulse { animation: pulse 1s infinite; }
     #timer-text {
       background: white;
       width: 60px;
@@ -110,24 +173,10 @@
       font-weight: 600;
       color: #333;
     }
-    .minutes { font-size: 18px; font-weight: 700; color: #4ecdc4; }
+    .minutes { font-size: 18px; font-weight: 700; color: #4ecdc4; transition: color 1.5s ease; }
     .rest .minutes { color: #ff6b9d; }
-    #mode-label {
-      font-size: 10px;
-      color: #999;
-      margin-top: 2px;
-    }
-
-    /* 포모도로 카운트 */
-    #pomo-count {
-      text-align: center;
-      margin-top: 6px;
-      font-size: 10px;
-      color: #aaa;
-      letter-spacing: 2px;
-    }
-
-    /* 진행률 표시 */
+    #mode-label { font-size: 10px; color: #999; margin-top: 2px; }
+    #pomo-count { text-align: center; margin-top: 6px; font-size: 10px; color: #aaa; letter-spacing: 2px; }
     #progress-label {
       position: absolute;
       bottom: -18px;
@@ -137,6 +186,29 @@
       color: #999;
       white-space: nowrap;
     }
+
+    /* 타이머 툴팁 */
+    #timer-tooltip {
+      position: absolute;
+      top: -36px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    #timer-wrap:hover #timer-tooltip { opacity: 1; }
+
+    /* 타이머 색상 테마 */
+    .theme-blue .minutes { color: #4D96FF !important; }
+    .theme-purple .minutes { color: #9B59B6 !important; }
+    .theme-orange .minutes { color: #FFA94D !important; }
 
     #loading {
       position: fixed;
@@ -165,157 +237,57 @@
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
     #timer-settings.show { display: block; }
-    #timer-settings h3 {
-      font-size: 16px;
-      color: #333;
-      margin-bottom: 16px;
-      font-weight: 600;
-    }
-    .time-inputs {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 16px;
-    }
+    #timer-settings h3 { font-size: 16px; color: #333; margin-bottom: 16px; font-weight: 600; }
+    .time-inputs { display: flex; gap: 8px; align-items: center; justify-content: center; margin-bottom: 16px; }
     .time-inputs input {
-      width: 54px;
-      height: 40px;
-      border: 2px solid #e0e0e0;
-      border-radius: 10px;
-      text-align: center;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
-      outline: none;
-      -webkit-app-region: no-drag;
-      -webkit-user-select: text;
-      user-select: text;
-      pointer-events: auto;
+      width: 54px; height: 40px; border: 2px solid #e0e0e0; border-radius: 10px;
+      text-align: center; font-size: 18px; font-weight: 600; color: #333; outline: none;
+      -webkit-app-region: no-drag; -webkit-user-select: text; user-select: text; pointer-events: auto;
     }
-    .time-inputs input:focus {
-      border-color: #10C58E;
-    }
+    .time-inputs input:focus { border-color: #10C58E; }
     .time-inputs input::-webkit-inner-spin-button,
-    .time-inputs input::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    .time-inputs span {
-      font-size: 13px;
-      color: #999;
-    }
-    .settings-btns {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-    }
-    .settings-btns button {
-      padding: 8px 20px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-apply {
-      background: #10C58E;
-      color: white;
-    }
-    .btn-cancel {
-      background: #f0f0f0;
-      color: #666;
-    }
+    .time-inputs input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .time-inputs span { font-size: 13px; color: #999; }
+    .settings-btns { display: flex; gap: 8px; justify-content: center; }
+    .settings-btns button { padding: 8px 20px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-apply { background: #10C58E; color: white; }
+    .btn-cancel { background: #f0f0f0; color: #666; }
 
     #rest-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      z-index: 20000;
-      pointer-events: auto;
-      cursor: default;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6); display: none;
+      align-items: center; justify-content: center; flex-direction: column;
+      z-index: 20000; pointer-events: auto; cursor: default;
     }
-    #rest-overlay.show {
-      display: flex;
-      animation: fadeIn 0.5s ease;
-    }
+    #rest-overlay.show { display: flex; animation: fadeIn 0.5s ease; }
     #rest-overlay .rest-text {
-      font-size: 80px;
-      font-weight: 800;
-      margin-bottom: 16px;
+      font-size: 80px; font-weight: 800; margin-bottom: 16px;
       animation: colorBlink 1.5s ease-in-out infinite;
       text-shadow: 0 0 30px rgba(255,255,255,0.5);
     }
-    #rest-overlay .rest-sub {
-      font-size: 22px;
-      color: rgba(255,255,255,0.8);
-      animation: colorBlink 1.5s ease-in-out infinite 0.4s;
-    }
+    #rest-overlay .rest-sub { font-size: 22px; color: rgba(255,255,255,0.8); animation: colorBlink 1.5s ease-in-out infinite 0.4s; }
     #btn-skip-rest {
-      margin-top: 24px;
-      padding: 10px 28px;
-      border: 2px solid rgba(255,255,255,0.5);
-      border-radius: 12px;
-      background: transparent;
-      color: rgba(255,255,255,0.8);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
+      margin-top: 24px; padding: 10px 28px; border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 12px; background: transparent; color: rgba(255,255,255,0.8);
+      font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
     }
-    #btn-skip-rest:hover {
-      background: rgba(255,255,255,0.15);
-      border-color: rgba(255,255,255,0.8);
-      color: white;
-    }
+    #btn-skip-rest:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.8); color: white; }
 
-    @keyframes fadeIn {
-      0% { opacity: 0; }
-      100% { opacity: 1; }
-    }
-    @keyframes fadeOut {
-      0% { opacity: 1; }
-      100% { opacity: 0; }
-    }
-    .sparkle {
-      display: inline-block;
-      font-size: 40px;
-      animation: sparkleRotate 1s ease-in-out infinite;
-    }
+    @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+    @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
+    .sparkle { display: inline-block; font-size: 40px; animation: sparkleRotate 1s ease-in-out infinite; }
     .sparkle-l { margin-right: 12px; }
     .sparkle-r { margin-left: 12px; animation-delay: 0.5s; }
-
-    @keyframes sparkleRotate {
-      0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
-      50% { transform: scale(1.4) rotate(180deg); opacity: 0.6; }
-    }
+    @keyframes sparkleRotate { 0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(1.4) rotate(180deg); opacity: 0.6; } }
     @keyframes colorBlink {
-      0% { color: #FF6B6B; transform: scale(1); text-shadow: 0 0 30px rgba(255,107,107,0.6); }
-      16% { color: #FFD93D; transform: scale(1.06); text-shadow: 0 0 30px rgba(255,217,61,0.6); }
-      33% { color: #6BCB77; transform: scale(1); text-shadow: 0 0 30px rgba(107,203,119,0.6); }
-      50% { color: #4D96FF; transform: scale(1.06); text-shadow: 0 0 30px rgba(77,150,255,0.6); }
-      66% { color: #FF6BD6; transform: scale(1); text-shadow: 0 0 30px rgba(255,107,214,0.6); }
-      83% { color: #FFA94D; transform: scale(1.06); text-shadow: 0 0 30px rgba(255,169,77,0.6); }
-      100% { color: #FF6B6B; transform: scale(1); text-shadow: 0 0 30px rgba(255,107,107,0.6); }
+      0% { color: #FF6B6B; transform: scale(1); } 16% { color: #FFD93D; transform: scale(1.06); }
+      33% { color: #6BCB77; transform: scale(1); } 50% { color: #4D96FF; transform: scale(1.06); }
+      66% { color: #FF6BD6; transform: scale(1); } 83% { color: #FFA94D; transform: scale(1.06); }
+      100% { color: #FF6B6B; transform: scale(1); }
     }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-    @keyframes clickRipple {
-      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-      100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
-    }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    @keyframes clickRipple { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; } }
   </style>
 </head>
 <body>
@@ -324,21 +296,15 @@
   <div id="timer-settings">
     <h3>집중 시간</h3>
     <div class="time-inputs">
-      <input type="number" id="set-hour" min="0" max="23" value="0" placeholder="0">
-      <span>시</span>
-      <input type="number" id="set-min" min="0" max="59" value="25" placeholder="25">
-      <span>분</span>
-      <input type="number" id="set-sec" min="0" max="59" value="0" placeholder="0">
-      <span>초</span>
+      <input type="number" id="set-hour" min="0" max="23" value="0" placeholder="0"><span>시</span>
+      <input type="number" id="set-min" min="0" max="59" value="25" placeholder="25"><span>분</span>
+      <input type="number" id="set-sec" min="0" max="59" value="0" placeholder="0"><span>초</span>
     </div>
     <h3>휴식 시간</h3>
     <div class="time-inputs">
-      <input type="number" id="set-rest-hour" min="0" max="23" value="0" placeholder="0">
-      <span>시</span>
-      <input type="number" id="set-rest-min" min="0" max="59" value="5" placeholder="5">
-      <span>분</span>
-      <input type="number" id="set-rest-sec" min="0" max="59" value="0" placeholder="0">
-      <span>초</span>
+      <input type="number" id="set-rest-hour" min="0" max="23" value="0" placeholder="0"><span>시</span>
+      <input type="number" id="set-rest-min" min="0" max="59" value="5" placeholder="5"><span>분</span>
+      <input type="number" id="set-rest-sec" min="0" max="59" value="0" placeholder="0"><span>초</span>
     </div>
     <div class="settings-btns">
       <button class="btn-apply" id="btn-apply-timer">적용</button>
@@ -347,20 +313,18 @@
   </div>
 
   <div id="rest-overlay">
-    <div class="rest-text">
-      <span class="sparkle sparkle-l">✦</span>
-      휴식 시간 !!
-      <span class="sparkle sparkle-r">✦</span>
-    </div>
+    <div class="rest-text"><span class="sparkle sparkle-l">✦</span>휴식 시간 !!<span class="sparkle sparkle-r">✦</span></div>
     <div class="rest-sub">잠시 쉬어가세요</div>
     <button id="btn-skip-rest">건너뛰기</button>
   </div>
 
   <div id="pet-container" style="display: none;">
+    <div id="mood-indicator">😊</div>
     <img id="pet-img" src="" alt="펫">
   </div>
 
   <div id="timer-wrap" style="display: none;">
+    <div id="timer-tooltip">오늘 집중: 0분 (0회)</div>
     <div id="timer">
       <div id="timer-text">
         <div class="minutes" id="minutes">25</div>
@@ -380,9 +344,12 @@
     const modeLabelEl = document.getElementById('mode-label');
     const timerEl = document.getElementById('timer');
     const timerTextEl = document.getElementById('timer-text');
+    const timerWrap = document.getElementById('timer-wrap');
     const loadingEl = document.getElementById('loading');
     const progressLabel = document.getElementById('progress-label');
     const pomoCountEl = document.getElementById('pomo-count');
+    const moodEl = document.getElementById('mood-indicator');
+    const timerTooltip = document.getElementById('timer-tooltip');
 
     // ===== 펫 물리 =====
     let targetX = window.innerWidth / 2;
@@ -394,6 +361,9 @@
     let isMoving = false;
     let facingLeft = false;
     let lastMoveTime = Date.now();
+    let trailCounter = 0;
+    let idleTimer = null;
+    let currentIdleClass = '';
 
     const SPRING_STIFFNESS = 0.06;
     const SPRING_DAMPING = 0.75;
@@ -403,7 +373,6 @@
     // ===== 타이머 =====
     let FOCUS_DURATION = 25 * 60;
     let REST_DURATION = 5 * 60;
-
     let timer = FOCUS_DURATION;
     let timerRunning = true;
     let restMode = false;
@@ -412,20 +381,99 @@
     let stillFrame = '';
     let pomoCount = 0;
 
-    // ===== 알림 사운드 (Web Audio) =====
+    // 타이머 테마
+    const timerThemes = [
+      { name: 'green', color: '#4ecdc4', class: '' },
+      { name: 'blue', color: '#4D96FF', class: 'theme-blue' },
+      { name: 'purple', color: '#9B59B6', class: 'theme-purple' },
+      { name: 'orange', color: '#FFA94D', class: 'theme-orange' }
+    ];
+    let currentThemeIdx = 0;
+
+    // ===== 무드 인디케이터 =====
+    function updateMood(mood) {
+      const moods = { idle: '😊', moving: '🏃', paused: '😴', rest: '🎉' };
+      moodEl.textContent = moods[mood] || '😊';
+    }
+
+    // ===== 잔상 효과 =====
+    function spawnTrail() {
+      const ghost = document.createElement('div');
+      ghost.className = 'trail-ghost';
+      ghost.style.left = (currentX - 60) + 'px';
+      ghost.style.top = (currentY - 60) + 'px';
+      const img = document.createElement('img');
+      img.src = petImg.src;
+      img.style.transform = `scaleX(${facingLeft ? -1 : 1})`;
+      ghost.appendChild(img);
+      document.body.appendChild(ghost);
+      ghost.addEventListener('animationend', () => ghost.remove());
+    }
+
+    // ===== 착지 바운스 =====
+    function triggerBounce() {
+      petContainer.classList.add('bounce');
+      setTimeout(() => petContainer.classList.remove('bounce'), 300);
+    }
+
+    // ===== 랜덤 아이들 =====
+    function stopIdleActions() {
+      if (idleTimer) { clearInterval(idleTimer); idleTimer = null; }
+      if (currentIdleClass) { petContainer.classList.remove(currentIdleClass); currentIdleClass = ''; }
+    }
+
+    function pickIdleAction() {
+      if (currentIdleClass) petContainer.classList.remove(currentIdleClass);
+      const actions = ['idle-float', 'idle-spin', 'idle-jump'];
+      currentIdleClass = actions[Math.floor(Math.random() * actions.length)];
+      petContainer.classList.add(currentIdleClass);
+    }
+
+    function startIdleActions() {
+      pickIdleAction();
+      idleTimer = setInterval(pickIdleAction, 8000);
+    }
+
+    // ===== 드래그 스파클 =====
+    let dragSparkleCounter = 0;
+    function spawnDragSparkle(x, y) {
+      const sparkles = ['✨', '⭐', '💫', '🌟'];
+      const el = document.createElement('div');
+      el.className = 'drag-sparkle';
+      el.textContent = sparkles[Math.floor(Math.random() * sparkles.length)];
+      el.style.left = (x + (Math.random() - 0.5) * 30) + 'px';
+      el.style.top = (y + (Math.random() - 0.5) * 30) + 'px';
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }
+
+    // ===== 하트 파티클 =====
+    function spawnHearts(x, y) {
+      const hearts = ['❤️', '💕', '💖', '🩷'];
+      for (let i = 0; i < 4; i++) {
+        const el = document.createElement('div');
+        el.className = 'heart-particle';
+        el.textContent = hearts[i];
+        el.style.left = (x + (Math.random() - 0.5) * 40) + 'px';
+        el.style.top = (y - 10) + 'px';
+        el.style.animationDelay = (i * 0.1) + 's';
+        document.body.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+      }
+    }
+
+    // ===== 알림 사운드 =====
     function playChime() {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
-        notes.forEach((freq, i) => {
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'sine';
           osc.frequency.value = freq;
           gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.15);
           gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.5);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
+          osc.connect(gain); gain.connect(ctx.destination);
           osc.start(ctx.currentTime + i * 0.15);
           osc.stop(ctx.currentTime + i * 0.15 + 0.5);
         });
@@ -437,60 +485,53 @@
       const h = Math.floor(totalSecs / 3600);
       const m = Math.floor((totalSecs % 3600) / 60);
       const s = totalSecs % 60;
-      if (h > 0) {
-        minutesEl.textContent = `${h}:${m.toString().padStart(2, '0')}`;
-        secondsEl.textContent = s.toString().padStart(2, '0');
-      } else {
-        minutesEl.textContent = m;
-        secondsEl.textContent = s.toString().padStart(2, '0');
-      }
+      minutesEl.textContent = h > 0 ? `${h}:${m.toString().padStart(2, '0')}` : m;
+      secondsEl.textContent = s.toString().padStart(2, '0');
     }
 
-    // ===== 포모도로 카운트 표시 =====
     function updatePomoDisplay() {
-      if (pomoCount === 0) { pomoCountEl.textContent = ''; return; }
-      if (pomoCount <= 8) {
-        pomoCountEl.textContent = '●'.repeat(pomoCount);
-      } else {
-        pomoCountEl.textContent = '● x' + pomoCount;
-      }
+      pomoCountEl.textContent = pomoCount === 0 ? '' : pomoCount <= 8 ? '●'.repeat(pomoCount) : '● x' + pomoCount;
     }
 
-    // ===== 하트 파티클 =====
-    function spawnHearts(x, y) {
-      const hearts = ['❤️', '💕', '💖', '🩷'];
-      for (let i = 0; i < 4; i++) {
-        const el = document.createElement('div');
-        el.className = 'heart-particle';
-        el.textContent = hearts[i % hearts.length];
-        el.style.left = (x + (Math.random() - 0.5) * 40) + 'px';
-        el.style.top = (y - 10) + 'px';
-        el.style.animationDelay = (i * 0.1) + 's';
-        document.body.appendChild(el);
-        el.addEventListener('animationend', () => el.remove());
-      }
+    // ===== 세션 기록 (localStorage) =====
+    function saveSession(duration) {
+      const key = 'ogq-sessions-' + new Date().toISOString().slice(0, 10);
+      const sessions = JSON.parse(localStorage.getItem(key) || '[]');
+      sessions.push(duration);
+      localStorage.setItem(key, JSON.stringify(sessions));
+      updateTooltip();
     }
 
-    // GIF 첫 프레임 캡처
+    function updateTooltip() {
+      const key = 'ogq-sessions-' + new Date().toISOString().slice(0, 10);
+      const sessions = JSON.parse(localStorage.getItem(key) || '[]');
+      const totalMin = Math.round(sessions.reduce((a, b) => a + b, 0) / 60);
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      timerTooltip.textContent = `오늘 집중: ${h > 0 ? h + '시간 ' : ''}${m}분 (${sessions.length}회)`;
+    }
+    updateTooltip();
+
+    // ===== 타이머 색상 가져오기 =====
+    function getTimerColor() {
+      return timerThemes[currentThemeIdx].color;
+    }
+
+    // GIF 프레임 캡처 / 토글
     function captureStillFrame(src) {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        canvas.getContext('2d').drawImage(img, 0, 0);
-        stillFrame = canvas.toDataURL('image/png');
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        c.getContext('2d').drawImage(img, 0, 0);
+        stillFrame = c.toDataURL('image/png');
       };
       img.src = src;
     }
 
-    // GIF 재생/정지 토글
     function setPetAnimating(animate) {
-      if (animate) {
-        petImg.src = originalGif + '?t=' + Date.now();
-      } else if (stillFrame) {
-        petImg.src = stillFrame;
-      }
+      if (animate) petImg.src = originalGif + '?t=' + Date.now();
+      else if (stillFrame) petImg.src = stillFrame;
     }
 
     // 펫 데이터 수신
@@ -499,11 +540,10 @@
       captureStillFrame(petData.gif);
       petImg.src = petData.gif;
       document.title = `${petData.name} 펫 활성화됨`;
-
       petImg.onload = () => {
         loadingEl.style.display = 'none';
         petContainer.style.display = 'block';
-        document.getElementById('timer-wrap').style.display = 'block';
+        timerWrap.style.display = 'block';
       };
       petImg.onerror = () => {
         loadingEl.textContent = 'GIF 로드 실패';
@@ -511,322 +551,226 @@
       };
     });
 
-    // ===== 휴식 건너뛰기 =====
+    // 타이머 상태 저장/복원
+    window.api.onRequestTimerState(() => {
+      window.api.saveTimerState({ timer, restMode, timerRunning, FOCUS_DURATION, REST_DURATION, pomoCount });
+    });
+    window.api.onRestoreTimerState((state) => {
+      if (!state) return;
+      timer = state.timer || FOCUS_DURATION;
+      restMode = state.restMode || false;
+      timerRunning = state.timerRunning !== undefined ? state.timerRunning : true;
+      FOCUS_DURATION = state.FOCUS_DURATION || 25 * 60;
+      REST_DURATION = state.REST_DURATION || 5 * 60;
+      pomoCount = state.pomoCount || 0;
+      updatePomoDisplay();
+      formatTimer(timer);
+      modeLabelEl.textContent = timerRunning ? (restMode ? '휴식' : '집중') : '일시정지';
+    });
+
+    // 휴식 건너뛰기
     function skipRest() {
       const restOverlay = document.getElementById('rest-overlay');
       restOverlay.style.animation = 'fadeOut 0.5s ease';
-      setTimeout(() => {
-        restOverlay.classList.remove('show');
-        restOverlay.style.animation = '';
-        window.api.setIgnoreMouseEvents(true, { forward: true });
-      }, 500);
-      restMode = false;
-      timer = FOCUS_DURATION;
-      setPetAnimating(true);
-      petImg.classList.remove('shake');
-      timerTextEl.classList.remove('rest');
-      timerEl.classList.remove('pulse');
-      modeLabelEl.textContent = '집중';
-      formatTimer(timer);
+      setTimeout(() => { restOverlay.classList.remove('show'); restOverlay.style.animation = ''; window.api.setIgnoreMouseEvents(true, { forward: true }); }, 500);
+      restMode = false; timer = FOCUS_DURATION;
+      setPetAnimating(true); petImg.classList.remove('shake'); timerTextEl.classList.remove('rest');
+      timerEl.classList.remove('pulse'); modeLabelEl.textContent = '집중'; updateMood('idle'); formatTimer(timer);
     }
-
     document.getElementById('btn-skip-rest').addEventListener('click', skipRest);
 
-    // 컨텍스트 메뉴 액션 수신
+    // 컨텍스트 메뉴 액션
     window.api.onContextMenuAction((action) => {
       switch (action) {
         case 'restart-timer':
-          restMode = false;
-          timer = FOCUS_DURATION;
-          timerRunning = true;
-          setPetAnimating(true);
-          petImg.classList.remove('shake');
-          timerTextEl.classList.remove('rest');
-          timerEl.classList.remove('pulse');
-          modeLabelEl.textContent = '집중';
-          break;
+          restMode = false; timer = FOCUS_DURATION; timerRunning = true;
+          setPetAnimating(true); petImg.classList.remove('shake'); timerTextEl.classList.remove('rest');
+          timerEl.classList.remove('pulse'); modeLabelEl.textContent = '집중'; updateMood('idle'); break;
         case 'toggle-pause':
           timerRunning = !timerRunning;
-          modeLabelEl.textContent = timerRunning
-            ? (restMode ? '휴식' : '집중')
-            : '일시정지';
-          setPetAnimating(timerRunning);
-          break;
+          modeLabelEl.textContent = timerRunning ? (restMode ? '휴식' : '집중') : '일시정지';
+          setPetAnimating(timerRunning); updateMood(timerRunning ? 'idle' : 'paused'); break;
         case 'rest-5min':
-          restMode = true;
-          timer = REST_DURATION;
-          timerRunning = true;
-          setPetAnimating(true);
-          timerTextEl.classList.add('rest');
-          modeLabelEl.textContent = '휴식';
-          break;
-        case 'show-timer-settings':
-          showTimerSettings();
-          break;
+          restMode = true; timer = REST_DURATION; timerRunning = true;
+          setPetAnimating(true); timerTextEl.classList.add('rest'); modeLabelEl.textContent = '휴식'; updateMood('rest'); break;
+        case 'show-timer-settings': showTimerSettings(); break;
       }
     });
 
     // 타이머 설정 패널
     const settingsPanel = document.getElementById('timer-settings');
-    settingsPanel.addEventListener('mouseenter', () => {
-      window.api.setIgnoreMouseEvents(false);
-    });
-    const setHour = document.getElementById('set-hour');
-    const setMin = document.getElementById('set-min');
-    const setSec = document.getElementById('set-sec');
-    const setRestHour = document.getElementById('set-rest-hour');
-    const setRestMin = document.getElementById('set-rest-min');
-    const setRestSec = document.getElementById('set-rest-sec');
+    settingsPanel.addEventListener('mouseenter', () => window.api.setIgnoreMouseEvents(false));
+    const setHour = document.getElementById('set-hour'), setMin = document.getElementById('set-min'), setSec = document.getElementById('set-sec');
+    const setRestHour = document.getElementById('set-rest-hour'), setRestMin = document.getElementById('set-rest-min'), setRestSec = document.getElementById('set-rest-sec');
 
     function showTimerSettings() {
-      setHour.value = Math.floor(FOCUS_DURATION / 3600);
-      setMin.value = Math.floor((FOCUS_DURATION % 3600) / 60);
-      setSec.value = FOCUS_DURATION % 60;
-      setRestHour.value = Math.floor(REST_DURATION / 3600);
-      setRestMin.value = Math.floor((REST_DURATION % 3600) / 60);
-      setRestSec.value = REST_DURATION % 60;
-      settingsPanel.classList.add('show');
-      window.api.setIgnoreMouseEvents(false);
+      setHour.value = Math.floor(FOCUS_DURATION / 3600); setMin.value = Math.floor((FOCUS_DURATION % 3600) / 60); setSec.value = FOCUS_DURATION % 60;
+      setRestHour.value = Math.floor(REST_DURATION / 3600); setRestMin.value = Math.floor((REST_DURATION % 3600) / 60); setRestSec.value = REST_DURATION % 60;
+      settingsPanel.classList.add('show'); window.api.setIgnoreMouseEvents(false);
     }
-
-    function hideTimerSettings() {
-      settingsPanel.classList.remove('show');
-      window.api.setIgnoreMouseEvents(true, { forward: true });
-    }
+    function hideTimerSettings() { settingsPanel.classList.remove('show'); window.api.setIgnoreMouseEvents(true, { forward: true }); }
 
     document.getElementById('btn-apply-timer').addEventListener('click', () => {
-      const h = parseInt(setHour.value) || 0;
-      const m = parseInt(setMin.value) || 0;
-      const s = parseInt(setSec.value) || 0;
-      const rh = parseInt(setRestHour.value) || 0;
-      const rm = parseInt(setRestMin.value) || 0;
-      const rs = parseInt(setRestSec.value) || 0;
-      const total = h * 3600 + m * 60 + s;
-      const restTotal = rh * 3600 + rm * 60 + rs;
+      const total = (parseInt(setHour.value)||0)*3600 + (parseInt(setMin.value)||0)*60 + (parseInt(setSec.value)||0);
+      const restTotal = (parseInt(setRestHour.value)||0)*3600 + (parseInt(setRestMin.value)||0)*60 + (parseInt(setRestSec.value)||0);
       if (total <= 0) return;
-      FOCUS_DURATION = total;
-      REST_DURATION = restTotal > 0 ? restTotal : 5 * 60;
-      timer = FOCUS_DURATION;
-      restMode = false;
-      timerRunning = true;
-      setPetAnimating(true);
-      petImg.classList.remove('shake');
-      timerTextEl.classList.remove('rest');
-      timerEl.classList.remove('pulse');
-      modeLabelEl.textContent = '집중';
-      formatTimer(timer);
-      hideTimerSettings();
+      FOCUS_DURATION = total; REST_DURATION = restTotal > 0 ? restTotal : 300;
+      timer = FOCUS_DURATION; restMode = false; timerRunning = true;
+      setPetAnimating(true); petImg.classList.remove('shake'); timerTextEl.classList.remove('rest');
+      timerEl.classList.remove('pulse'); modeLabelEl.textContent = '집중'; formatTimer(timer); hideTimerSettings();
     });
+    document.getElementById('btn-cancel-timer').addEventListener('click', hideTimerSettings);
 
-    document.getElementById('btn-cancel-timer').addEventListener('click', () => {
-      hideTimerSettings();
-    });
-
-    // ===== 클릭으로 포인트 이동 =====
+    // ===== 클릭으로 이동 =====
     document.addEventListener('click', (e) => {
-      if (petContainer.contains(e.target) || document.getElementById('timer-wrap').contains(e.target)) return;
-
-      targetX = e.clientX;
-      targetY = e.clientY;
-      isMoving = true;
-      lastMoveTime = Date.now();
-      petContainer.classList.remove('idle');
-
-      // 이동 방향에 따라 좌우 반전
+      if (petContainer.contains(e.target) || timerWrap.contains(e.target)) return;
+      targetX = e.clientX; targetY = e.clientY;
+      isMoving = true; lastMoveTime = Date.now();
+      stopIdleActions();
       if (targetX < currentX) facingLeft = true;
       else if (targetX > currentX) facingLeft = false;
-
-      // 클릭 이펙트
+      updateMood('moving');
       const marker = document.createElement('div');
-      marker.className = 'click-marker';
-      marker.style.left = e.clientX + 'px';
-      marker.style.top = e.clientY + 'px';
-      document.body.appendChild(marker);
-      marker.addEventListener('animationend', () => marker.remove());
+      marker.className = 'click-marker'; marker.style.left = e.clientX + 'px'; marker.style.top = e.clientY + 'px';
+      document.body.appendChild(marker); marker.addEventListener('animationend', () => marker.remove());
     });
 
     // ===== 스프링 물리 애니메이션 =====
     function animate() {
       if (isMoving) {
-        const dx = targetX - currentX;
-        const dy = targetY - currentY;
+        const dx = targetX - currentX, dy = targetY - currentY;
+        velocityX += dx * SPRING_STIFFNESS; velocityY += dy * SPRING_STIFFNESS;
+        velocityX *= SPRING_DAMPING; velocityY *= SPRING_DAMPING;
+        currentX += velocityX; currentY += velocityY;
 
-        // 스프링 물리: 가속 → 감속 (오버슈트 가능)
-        velocityX += dx * SPRING_STIFFNESS;
-        velocityY += dy * SPRING_STIFFNESS;
-        velocityX *= SPRING_DAMPING;
-        velocityY *= SPRING_DAMPING;
+        // 잔상
+        trailCounter++;
+        if (trailCounter % 4 === 0) spawnTrail();
 
-        currentX += velocityX;
-        currentY += velocityY;
-
-        // 도착 판정
-        if (Math.abs(dx) < ARRIVE_THRESHOLD && Math.abs(dy) < ARRIVE_THRESHOLD
-            && Math.abs(velocityX) < 0.5 && Math.abs(velocityY) < 0.5) {
-          currentX = targetX;
-          currentY = targetY;
-          velocityX = 0;
-          velocityY = 0;
-          isMoving = false;
-          lastMoveTime = Date.now();
+        if (Math.abs(dx) < ARRIVE_THRESHOLD && Math.abs(dy) < ARRIVE_THRESHOLD && Math.abs(velocityX) < 0.5 && Math.abs(velocityY) < 0.5) {
+          currentX = targetX; currentY = targetY; velocityX = 0; velocityY = 0;
+          isMoving = false; lastMoveTime = Date.now();
+          triggerBounce(); updateMood('idle');
         }
       }
 
-      // 좌우 반전 적용
       const scaleX = facingLeft ? -1 : 1;
-      if (!isDragging) {
-        petImg.style.transform = `scaleX(${scaleX})`;
-      }
-
-      petContainer.style.left = (currentX - 60) + 'px';
-      petContainer.style.top = (currentY - 60) + 'px';
+      if (!isDragging) petImg.style.transform = `scaleX(${scaleX})`;
+      petContainer.style.left = (currentX - 60) + 'px'; petContainer.style.top = (currentY - 60) + 'px';
 
       // 아이들 체크
-      if (!isMoving && !isDragging && Date.now() - lastMoveTime > IDLE_DELAY) {
-        petContainer.classList.add('idle');
+      if (!isMoving && !isDragging && !idleTimer && Date.now() - lastMoveTime > IDLE_DELAY) {
+        startIdleActions();
       }
 
       animationFrame = requestAnimationFrame(animate);
     }
     animate();
 
-    // ===== 타이머 =====
+    // ===== 타이머 틱 =====
     setInterval(() => {
       if (!timerRunning) return;
-
       timer--;
       formatTimer(timer);
-
       const total = restMode ? REST_DURATION : FOCUS_DURATION;
       const elapsed = total - timer;
       const progress = (elapsed / total) * 360;
       const percent = Math.round((elapsed / total) * 100);
-      const color1 = restMode ? '#ff6b9d' : '#4ecdc4';
-      const color2 = restMode ? '#ffecd2' : '#ff6b9d';
-      timerEl.style.background = `conic-gradient(${color1} 0deg ${progress}deg, ${color2} ${progress}deg 360deg)`;
+      const c1 = restMode ? '#ff6b9d' : getTimerColor();
+      const c2 = restMode ? '#ffecd2' : '#ff6b9d';
+      timerEl.style.background = `conic-gradient(${c1} 0deg ${progress}deg, ${c2} ${progress}deg 360deg)`;
       progressLabel.textContent = percent + '%';
-
-      if (timer <= 60 && timer > 0) {
-        timerEl.classList.add('pulse');
-      } else {
-        timerEl.classList.remove('pulse');
-      }
+      timerEl.classList.toggle('pulse', timer <= 60 && timer > 0);
 
       if (timer <= 0) {
         const restOverlay = document.getElementById('rest-overlay');
         playChime();
-
         if (!restMode) {
-          // 집중 끝 → 휴식 시작
-          pomoCount++;
-          updatePomoDisplay();
-          restMode = true;
-          timer = REST_DURATION;
-          petImg.classList.add('shake');
-          timerTextEl.classList.add('rest');
-          modeLabelEl.textContent = '휴식';
-          window.api.setIgnoreMouseEvents(false);
-          restOverlay.classList.add('show');
+          pomoCount++; updatePomoDisplay();
+          saveSession(FOCUS_DURATION);
+          restMode = true; timer = REST_DURATION;
+          petImg.classList.add('shake'); timerTextEl.classList.add('rest');
+          modeLabelEl.textContent = '휴식'; updateMood('rest');
+          window.api.setIgnoreMouseEvents(false); restOverlay.classList.add('show');
         } else {
-          // 휴식 끝 → 집중 재시작
           restOverlay.style.animation = 'fadeOut 0.5s ease';
-          setTimeout(() => {
-            restOverlay.classList.remove('show');
-            restOverlay.style.animation = '';
-            window.api.setIgnoreMouseEvents(true, { forward: true });
-          }, 500);
-          restMode = false;
-          timer = FOCUS_DURATION;
-          setPetAnimating(true);
-          petImg.classList.remove('shake');
-          timerTextEl.classList.remove('rest');
-          timerEl.classList.remove('pulse');
-          modeLabelEl.textContent = '집중';
-          restOverlay.classList.remove('show');
+          setTimeout(() => { restOverlay.classList.remove('show'); restOverlay.style.animation = ''; window.api.setIgnoreMouseEvents(true, { forward: true }); }, 500);
+          restMode = false; timer = FOCUS_DURATION;
+          setPetAnimating(true); petImg.classList.remove('shake'); timerTextEl.classList.remove('rest');
+          timerEl.classList.remove('pulse'); modeLabelEl.textContent = '집중'; updateMood('idle');
         }
         formatTimer(timer);
       }
     }, 1000);
 
-    // ESC → 앱 종료
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        cancelAnimationFrame(animationFrame);
-        window.api.quitApp();
-      }
-    });
+    // ESC
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { cancelAnimationFrame(animationFrame); window.api.quitApp(); } });
 
-    // ===== 드래그 =====
-    let isDragging = false;
-    let dragOffsetX = 0;
-    let dragOffsetY = 0;
+    // ===== 펫 드래그 =====
+    let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
 
-    petContainer.addEventListener('mouseenter', () => {
-      window.api.setIgnoreMouseEvents(false);
-    });
-    petContainer.addEventListener('mouseleave', () => {
-      if (!isDragging) {
-        window.api.setIgnoreMouseEvents(true, { forward: true });
-      }
-    });
-    document.getElementById('timer-wrap').addEventListener('mouseenter', () => {
-      window.api.setIgnoreMouseEvents(false);
-    });
-    document.getElementById('timer-wrap').addEventListener('mouseleave', () => {
-      window.api.setIgnoreMouseEvents(true, { forward: true });
-    });
+    petContainer.addEventListener('mouseenter', () => window.api.setIgnoreMouseEvents(false));
+    petContainer.addEventListener('mouseleave', () => { if (!isDragging) window.api.setIgnoreMouseEvents(true, { forward: true }); });
+    timerWrap.addEventListener('mouseenter', () => window.api.setIgnoreMouseEvents(false));
+    timerWrap.addEventListener('mouseleave', () => { if (!timerDragging) window.api.setIgnoreMouseEvents(true, { forward: true }); });
 
     petContainer.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
-      isDragging = true;
-      isMoving = false;
-      petContainer.classList.remove('idle');
-      lastMoveTime = Date.now();
-      dragOffsetX = e.clientX - currentX;
-      dragOffsetY = e.clientY - currentY;
-      petImg.style.cursor = 'grabbing';
-      petImg.style.transform = 'scale(1.1)';
+      isDragging = true; isMoving = false; stopIdleActions();
+      lastMoveTime = Date.now(); dragOffsetX = e.clientX - currentX; dragOffsetY = e.clientY - currentY;
+      petImg.style.cursor = 'grabbing'; petImg.style.transform = 'scale(1.1)'; updateMood('moving');
     });
 
     document.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      currentX = e.clientX - dragOffsetX;
-      currentY = e.clientY - dragOffsetY;
-      targetX = currentX;
-      targetY = currentY;
-      petContainer.style.left = (currentX - 60) + 'px';
-      petContainer.style.top = (currentY - 60) + 'px';
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (!isDragging) return;
-      isDragging = false;
-      lastMoveTime = Date.now();
-      petImg.style.cursor = 'pointer';
-      const scaleX = facingLeft ? -1 : 1;
-      petImg.style.transform = `scaleX(${scaleX})`;
-    });
-
-    // 펫 클릭 → 하트 파티클
-    petContainer.addEventListener('click', (e) => {
-      if (!isDragging) {
-        spawnHearts(currentX, currentY - 30);
+      if (isDragging) {
+        currentX = e.clientX - dragOffsetX; currentY = e.clientY - dragOffsetY;
+        targetX = currentX; targetY = currentY;
+        petContainer.style.left = (currentX - 60) + 'px'; petContainer.style.top = (currentY - 60) + 'px';
+        dragSparkleCounter++;
+        if (dragSparkleCounter % 3 === 0) spawnDragSparkle(e.clientX, e.clientY);
+      }
+      if (timerDragging) {
+        timerWrap.style.left = (e.clientX - timerDragOffX) + 'px';
+        timerWrap.style.top = (e.clientY - timerDragOffY) + 'px';
+        timerWrap.style.right = 'auto';
       }
     });
 
-    // 더블클릭 반응
-    petContainer.addEventListener('dblclick', () => {
-      petImg.style.transform = 'scale(1.5) rotate(15deg)';
-      setTimeout(() => {
-        const scaleX = facingLeft ? -1 : 1;
-        petImg.style.transform = `scaleX(${scaleX})`;
-      }, 500);
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false; lastMoveTime = Date.now();
+        petImg.style.cursor = 'pointer'; petImg.style.transform = `scaleX(${facingLeft ? -1 : 1})`; updateMood('idle');
+      }
+      if (timerDragging) { timerDragging = false; timerWrap.classList.remove('dragging'); }
     });
 
-    // 우클릭 → 컨텍스트 메뉴
-    petContainer.addEventListener('contextmenu', (e) => {
+    petContainer.addEventListener('click', (e) => { if (!isDragging) spawnHearts(currentX, currentY - 30); });
+    petContainer.addEventListener('dblclick', () => {
+      petImg.style.transform = 'scale(1.5) rotate(15deg)';
+      setTimeout(() => { petImg.style.transform = `scaleX(${facingLeft ? -1 : 1})`; }, 500);
+    });
+    petContainer.addEventListener('contextmenu', (e) => { e.preventDefault(); window.api.showContextMenu(); });
+
+    // ===== 타이머 드래그 =====
+    let timerDragging = false, timerDragOffX = 0, timerDragOffY = 0;
+    timerWrap.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      timerDragging = true; timerWrap.classList.add('dragging');
+      const rect = timerWrap.getBoundingClientRect();
+      timerDragOffX = e.clientX - rect.left; timerDragOffY = e.clientY - rect.top;
+    });
+
+    // 타이머 더블클릭: 미니 모드
+    timerWrap.addEventListener('dblclick', () => {
+      timerWrap.classList.toggle('mini');
+    });
+
+    // 타이머 우클릭: 색상 테마 순환
+    timerWrap.addEventListener('contextmenu', (e) => {
       e.preventDefault();
-      window.api.showContextMenu();
+      timerEl.classList.remove(timerThemes[currentThemeIdx].class);
+      currentThemeIdx = (currentThemeIdx + 1) % timerThemes.length;
+      if (timerThemes[currentThemeIdx].class) timerEl.classList.add(timerThemes[currentThemeIdx].class);
     });
   </script>
 </body>
