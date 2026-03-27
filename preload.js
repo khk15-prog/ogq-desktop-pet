@@ -8,10 +8,11 @@ contextBridge.exposeInMainWorld('api', {
   setIgnoreMouseEvents: (ignore, options) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
   onPetData: (callback) => ipcRenderer.on('pet-data', (_event, data) => callback(data)),
   onContextMenuAction: (callback) => ipcRenderer.on('context-menu-action', (_event, action) => callback(action)),
+  onActivityState: (callback) => ipcRenderer.on('activity-state', (_event, data) => callback(data)),
+  onActivityAlert: (callback) => ipcRenderer.on('activity-alert', (_event, type) => callback(type)),
+  getStats: () => ipcRenderer.invoke('get-stats'),
   getSavedPet: () => ipcRenderer.invoke('get-saved-pet'),
   clearSavedPet: () => ipcRenderer.send('clear-saved-pet'),
-  saveTimerState: (state) => ipcRenderer.send('save-timer-state', state),
-  onRequestTimerState: (callback) => ipcRenderer.on('request-timer-state', () => callback()),
-  onRestoreTimerState: (callback) => ipcRenderer.on('restore-timer-state', (_event, state) => callback(state)),
-  onSetOpacity: (callback) => ipcRenderer.on('set-opacity', (_event, value) => callback(value))
+  getMemo: () => ipcRenderer.invoke('get-memo'),
+  saveMemo: (memo) => ipcRenderer.send('save-memo', memo)
 });

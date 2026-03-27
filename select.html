@@ -10,14 +10,14 @@
     body {
       font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, sans-serif;
       text-align: center;
-      padding: 28px 24px 5px;
+      padding: 24px 24px 12px;
       background-color: #f7f7f7;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='20' viewBox='0 0 100 20'%3E%3Cpath d='M0 10 Q25 0 50 10 Q75 20 100 10' fill='none' stroke='%23ececec' stroke-width='1.5'/%3E%3C/svg%3E");
       background-size: 100px 20px;
-      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
     }
     h1 { font-family: 'Fredoka', sans-serif; font-size: 30px; color: #10C58E; font-weight: 600; letter-spacing: 1px; }
-    .subtitle { font-size: 12px; color: #aaa; font-weight: 400; margin-top: 4px; margin-bottom: 12px; }
+    .subtitle { font-size: 12px; color: #aaa; font-weight: 400; margin-top: 2px; margin-bottom: 10px; }
 
     /* 툴바 */
     .toolbar {
@@ -36,13 +36,11 @@
     }
     .view-toggle:hover { border-color: #10C58E; }
 
-    /* 스크롤 그리드 */
+    /* 그리드 */
     .characters-wrap {
-      flex: 1; width: 100%; max-width: 340px;
-      overflow-y: auto; overflow-x: hidden; padding-bottom: 8px;
+      width: 100%; max-width: 340px;
+      overflow: visible; padding-bottom: 8px;
     }
-    .characters-wrap::-webkit-scrollbar { width: 4px; }
-    .characters-wrap::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
     .characters { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; }
     .characters.list-view { grid-template-columns: 1fr; }
     .characters.list-view .character-card {
@@ -77,15 +75,6 @@
       0% { transform: scale(1); } 50% { transform: scale(1.12); box-shadow: 0 0 30px rgba(16, 197, 142, 0.6); } 100% { transform: scale(1.08); }
     }
 
-    /* 즐겨찾기 버튼 */
-    .fav-btn {
-      position: absolute; top: 4px; right: 4px; width: 24px; height: 24px;
-      border: none; background: none; cursor: pointer; font-size: 14px;
-      opacity: 0.3; transition: opacity 0.2s, transform 0.2s; z-index: 2;
-    }
-    .fav-btn:hover { opacity: 0.7; transform: scale(1.2); }
-    .fav-btn.favorited { opacity: 1; }
-
     /* 최근 뱃지 */
     .recent-badge {
       position: absolute; top: 4px; left: 4px;
@@ -113,7 +102,7 @@
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     .character-name { margin-top: 6px; font-size: 12px; font-weight: 500; color: #555; }
     .character-card:hover .character-name { color: #10C58E; font-weight: 600; }
-    .footer { padding: 10px 0 8px; font-size: 10px; color: #bbb; letter-spacing: 0.3px; }
+    .footer { padding: 0; margin-bottom: 8px; font-size: 10px; color: #bbb; letter-spacing: 0.3px; }
     .footer span { color: #ddd; margin: 0 4px; }
     @keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-6px); } }
   </style>
@@ -129,43 +118,37 @@
 
   <div class="characters-wrap">
     <div class="characters" id="characters-grid">
-      <div class="character-card" data-id="1" data-name="교모티콘" data-gif="assets/gubuki.gif">
-        <button class="fav-btn">♥</button>
+      <div class="character-card" data-id="1" data-name="교모티콘" data-gif="assets/gubuki.gif" data-folder="assets/교모티콘">
         <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/gubuki.gif" src="" alt="교모티콘">
         <div class="character-name">교모티콘</div>
         <div class="card-tooltip">교모티콘</div>
       </div>
-      <div class="character-card" data-id="2" data-name="하찮햄" data-gif="assets/ppokku.gif">
-        <button class="fav-btn">♥</button>
+      <div class="character-card" data-id="2" data-name="하찮햄" data-gif="assets/ppokku.gif" data-folder="assets/하찮햄">
         <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/ppokku.gif" src="" alt="하찮햄">
         <div class="character-name">하찮햄</div>
         <div class="card-tooltip">하찮햄</div>
       </div>
-      <div class="character-card" data-id="3" data-name="베리콘" data-gif="assets/nareun.gif">
-        <button class="fav-btn">♥</button>
+      <div class="character-card" data-id="3" data-name="베리콘" data-gif="assets/nareun.gif" data-folder="assets/베리콘">
         <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/nareun.gif" src="" alt="베리콘">
         <div class="character-name">베리콘</div>
         <div class="card-tooltip">베리콘</div>
       </div>
-      <div class="character-card" data-id="4" data-name="구북티콘" data-gif="assets/coinko.gif">
-        <button class="fav-btn">♥</button>
+      <div class="character-card" data-id="4" data-name="구북티콘" data-gif="assets/coinko.gif" data-folder="assets/구북티콘">
         <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/coinko.gif" src="" alt="구북티콘">
         <div class="character-name">구북티콘</div>
         <div class="card-tooltip">구북티콘</div>
       </div>
-      <div class="character-card" data-id="5" data-name="혜냥이랑" data-gif="assets/custom-default.gif">
-        <button class="fav-btn">♥</button>
+      <div class="character-card" data-id="5" data-name="혜냥이랑" data-gif="assets/custom-default.gif" data-folder="assets/혜냥이랑">
         <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/custom-default.gif" src="" alt="혜냥이랑">
         <div class="character-name">혜냥이랑</div>
         <div class="card-tooltip">혜냥이랑</div>
       </div>
-      <div class="character-card" data-id="6" data-name="해달티콘" data-gif="assets/char6.gif">
-        <button class="fav-btn">♥</button>
+      <div class="character-card" data-id="6" data-name="해달티콘" data-gif="assets/char6.gif" data-folder="assets/해달티콘">
         <span class="recent-badge">최근</span>
         <img class="gif-preview loading" data-src="assets/char6.gif" src="" alt="해달티콘">
         <div class="character-name">해달티콘</div>
@@ -174,7 +157,7 @@
     </div>
   </div>
 
-  <div class="footer">Powered by OGQ <span>|</span> v0.2.0</div>
+  <div class="footer">© 2026 OGQ <span>|</span> v0.2.0</div>
 
   <script>
     const grid = document.getElementById('characters-grid');
@@ -182,29 +165,6 @@
     const searchInput = document.getElementById('search-input');
     let focusedIdx = -1;
     let isListView = false;
-
-    // ===== 즐겨찾기 =====
-    function getFavorites() { return JSON.parse(localStorage.getItem('ogq-favorites') || '[]'); }
-    function setFavorites(favs) { localStorage.setItem('ogq-favorites', JSON.stringify(favs)); }
-
-    function updateFavUI() {
-      const favs = getFavorites();
-      cards.forEach(card => {
-        const btn = card.querySelector('.fav-btn');
-        const isFav = favs.includes(card.dataset.id);
-        btn.classList.toggle('favorited', isFav);
-      });
-    }
-
-    function sortByFavorites() {
-      const favs = getFavorites();
-      const sorted = [...cards].sort((a, b) => {
-        const aFav = favs.includes(a.dataset.id) ? 0 : 1;
-        const bFav = favs.includes(b.dataset.id) ? 0 : 1;
-        return aFav - bFav;
-      });
-      sorted.forEach(card => grid.appendChild(card));
-    }
 
     // ===== 최근 사용 =====
     function updateLastUsed() {
@@ -282,29 +242,17 @@
         clearTimeout(tooltipTimer); tooltip.classList.remove('show');
       });
 
-      // 즐겨찾기 토글
-      card.querySelector('.fav-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        const favs = getFavorites();
-        const id = card.dataset.id;
-        const idx = favs.indexOf(id);
-        if (idx >= 0) favs.splice(idx, 1); else favs.push(id);
-        setFavorites(favs); updateFavUI(); sortByFavorites();
-      });
-
       // 선택
       card.addEventListener('click', () => {
         localStorage.setItem('ogq-last-used', card.dataset.id);
         card.classList.add('selected');
         setTimeout(() => {
-          window.api.selectPet({ id: Number(card.dataset.id), name: card.dataset.name, gif: card.dataset.gif });
+          window.api.selectPet({ id: Number(card.dataset.id), name: card.dataset.name, gif: card.dataset.gif, folder: card.dataset.folder });
         }, 350);
       });
     });
 
     // 초기화
-    updateFavUI();
-    sortByFavorites();
     updateLastUsed();
 
     // 입장 애니메이션 (staggered)
